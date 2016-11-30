@@ -38,17 +38,37 @@ KNN_RENDER_GROUND=output/render.ground.json
 KNN_RENDER_RESUME=output/render.resume.json
 KNN_RENDER_LATEX=output/render.latex.pdf
 
+KNN_DTW_MODEL_JSON=output/model.dtw.json
+KNN_CONFUSION_MODEL_JSON=output/model.confusion.json
+
 # Configuration stuff
 #--------------------
 PERCENTAGE=0.5
 REMOTE_KNN=false
-DTW_ARGS=
 KNN_CONFUSION_ARGS=-f -k5
 KNN_RENDER_LATEX_ARGS=-lscx
+USE_MODEL=true
 
 # Build target
 #-------------
-all: prepare $(KNN_RENDER_LATEX)
+all: prepare run output_file.csv
+
+run: $(KNN_RENDER_LATEX)
+
+#output_file.csv: .flags/PERCENTAGE
+#	@echo "$(PERCENTAGE)" > output_file.csv
+#	@echo "BUILD"
+
+clean:
+	rm -rf jobfiles
+	rm -rf output
+	rm -rf csv
+
+# Rebuild on changed compiler flags
+#----------------------------------
+.flags/%: force
+	@mkdir -p .flags
+	@echo '$($(@F))' | cmp -s - $@ || echo '$($(@F))' > $@
 
 # Install software
 #-----------------
@@ -106,7 +126,7 @@ $(JOBFILE_COMBINED): $(CSV_FILES)
 	$(CSV_TO_JOBFILE) csv/ > $@
 
 # .jobfile to .jobfiles (split)
-$(JOBFILE_QRY) $(JOBFILE_REF): $(JOBFILE_COMBINED)
+$(JOBFILE_QRY) $(JOBFILE_REF): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 	@mkdir -p jobfiles
 	cat $< | $(JOBFILE_SPLITTER) -O jobfiles -rbp $(PERCENTAGE)
 
@@ -114,15 +134,37 @@ $(JOBFILE_QRY) $(JOBFILE_REF): $(JOBFILE_COMBINED)
 $(KNN_DTW_JSON): $(JOBFILE_QRY) $(JOBFILE_REF)
 	@mkdir -p output
 ifeq ($(REMOTE_KNN),true)
-	$(REMOTE_KNN_DTW) $(JOBFILE_REF) $(JOBFILE_QRY) "$(DTW_ARGS)" > $@
+	$(REMOTE_KNN_DTW) $(JOBFILE_REF) $(JOBFILE_QRY) > $@
 else
-	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_QRY) --reference_filename=$(JOBFILE_REF) $(DTW_ARGS) > $@
+	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_QRY) --reference_filename=$(JOBFILE_REF) > $@
+	echo "WOW" > $@
 endif
 
+ifeq ($(USE_MODEL),true)
+# Generate model using dtw
+$(KNN_DTW_MODEL_JSON): $(JOBFILE_COMBINED) .flags/USE_MODEL
+	@mkdir -p output
+ifeq ($(REMOTE_KNN),true)
+	$(REMOTE_KNN_DTW) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) -m > $@
+else
+	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_COMBINED) --reference_filename=$(JOBFILE_COMBINED) -m > $@
+endif
+
+# Generate model
+$(KNN_CONFUSION_MODEL_JSON): $(KNN_DTW_MODEL_JSON)
+	@mkdir -p output
+	cat $< | $(KNN_CONFUSION) --modelling > $@
+
+# .json to .json (processing) - using model
+$(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) $(KNN_CONFUSION_MODEL_JSON) .flags/KNN_CONFUSION_ARGS
+	@mkdir -p output
+	cat $(KNN_DTW_JSON) | $(KNN_CONFUSION) --statistics $(KNN_CONFUSION_MODEL_JSON) $(KNN_CONFUSION_ARGS) > $@
+else
 # .json to .json (processing)
-$(KNN_CONFUSION_JSON): $(KNN_DTW_JSON)
+$(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
 	@mkdir -p output
 	cat $< | $(KNN_CONFUSION) $(KNN_CONFUSION_ARGS) > $@
+endif
 
 # .json to .json (processing)
 $(KNN_RENDER_GROUND): $(KNN_CONFUSION_JSON)
@@ -135,11 +177,11 @@ $(KNN_RENDER_RESUME): $(KNN_CONFUSION_JSON)
 	cat $< | $(KNN_RENDER) -r >$@
 
 # .json to .pdf
-$(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON)
+$(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
 	@mkdir -p output
 	cat $< | $(KNN_RENDER) $(KNN_RENDER_LATEX_ARGS) | lualatex -jobname $@
 
 # These don't really output files
-.PHONY: all prepare build_CSV_TO_JOBFILE build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
+.PHONY: all prepare run clean force build_CSV_TO_JOBFILE build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
 # These are build by multi-target rule, so non-parallel for this one
 .NOTPARALLEL: $(JOBFILE_QRY) $(JOBFILE_REF)
