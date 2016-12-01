@@ -43,6 +43,8 @@ KNN_CONFUSION_MODEL_JSON=output/model.confusion.json
 #--------------------
 PERCENTAGE=0.5
 REMOTE_KNN=true
+REMOTE_KNN_SPLIT=5
+REMOTE_KNN_TIMEOUT=100000
 KNN_CONFUSION_ARGS=-f -k3 -n 1.7 -q 12
 KNN_RENDER_LATEX_ARGS=-lscx
 USE_MODEL=true
@@ -137,7 +139,7 @@ $(JOBFILE_QRY) $(JOBFILE_REF): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 $(KNN_DTW_JSON): $(JOBFILE_QRY) $(JOBFILE_REF)
 	@mkdir -p output
 ifeq ($(REMOTE_KNN),true)
-	$(REMOTE_KNN_DTW) $(JOBFILE_REF) $(JOBFILE_QRY) > $@
+	$(REMOTE_KNN_DTW) $(JOBFILE_REF) $(JOBFILE_QRY) "" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
 else
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_QRY) --reference_filename=$(JOBFILE_REF) > $@
 endif
@@ -147,7 +149,7 @@ ifeq ($(USE_MODEL),true)
 $(KNN_DTW_MODEL_JSON): $(JOBFILE_COMBINED) .flags/USE_MODEL
 	@mkdir -p output
 ifeq ($(REMOTE_KNN),true)
-	$(REMOTE_KNN_DTW) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) -m > $@
+	$(REMOTE_KNN_DTW) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) "-m" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
 else
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_COMBINED) --reference_filename=$(JOBFILE_COMBINED) -m > $@
 endif
