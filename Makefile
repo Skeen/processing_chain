@@ -29,15 +29,15 @@ JOBFILE_COMBINED=jobfiles/combined.jobfile
 JOBFILE_QRY=jobfiles/qry.jobfile
 JOBFILE_REF=jobfiles/ref.jobfile
 
-KNN_DTW_JSON=output/output.json
-KNN_CONFUSION_JSON=output/confusion.json
+KNN_DTW_JSON=output/dtw.output.json
+KNN_CONFUSION_JSON=output/confusion.output.json
+
+KNN_DTW_MODEL_JSON=output/dtw.model.json
+KNN_CONFUSION_MODEL_JSON=output/confusion.model.json
 
 KNN_RENDER_GROUND=output/render.ground.json
 KNN_RENDER_RESUME=output/render.resume.json
 KNN_RENDER_LATEX=output/render.latex.pdf
-
-KNN_DTW_MODEL_JSON=output/model.dtw.json
-KNN_CONFUSION_MODEL_JSON=output/model.confusion.json
 
 # Configuration stuff
 #--------------------
@@ -184,6 +184,8 @@ $(KNN_RENDER_RESUME): $(KNN_CONFUSION_JSON)
 $(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
 	@mkdir -p output
 	cat $< | $(KNN_RENDER) $(KNN_RENDER_LATEX_ARGS) | lualatex -jobname $(@D)/$(basename $(@F))
+	@rm $(@D)/$(basename $(@F)).log
+	@rm $(@D)/$(basename $(@F)).aux
 
 # These don't really output files
 .PHONY: all prepare run clean force build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
