@@ -62,6 +62,8 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+INPUT_REGEX=$1
+
 # Get script directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Every runs local to the script
@@ -83,5 +85,6 @@ rm -rf data
 echo ""
 echo ""
 echo "Downloading datasets" | boxes
-timing download_dataset "$INPUT_REGEX" "data"
+mkdir -p data/
+timing download_dataset "$INPUT_REGEX" "data/"
 kill_ssh_agent

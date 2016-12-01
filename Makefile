@@ -18,7 +18,7 @@ REMOTE_KNN_DTW=$(REMOTE_KNN_DTW_FOLDER)/request.sh
 KNN_CONFUSION_FOLDER=../knn_confusion
 KNN_CONFUSION=$(KNN_CONFUSION_FOLDER)/index.js
 
-KNN_RENDER_FOLDER=../knn_render/
+KNN_RENDER_FOLDER=../knn_render
 KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 
 # Files
@@ -26,6 +26,7 @@ KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 RAW_INPUT_FILES := $(wildcard data/*.raw)
 CSV_INPUT_FILES := $(wildcard data/*.csv)
 CSV_FILES := $(addprefix csv/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
+JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
 JOBFILE_COMBINED=jobfiles/combined.jobfile
 JOBFILE_QRY=jobfiles/qry.jobfile
@@ -44,16 +45,16 @@ KNN_CONFUSION_MODEL_JSON=output/model.confusion.json
 # Configuration stuff
 #--------------------
 PERCENTAGE=0.5
-REMOTE_KNN=false
-KNN_CONFUSION_ARGS=-f -k5
+REMOTE_KNN=true
+KNN_CONFUSION_ARGS=-f -k3 -n 1.7 -q 12
 KNN_RENDER_LATEX_ARGS=-lscx
 USE_MODEL=true
 
 # Build target
 #-------------
-all: prepare run output_file.csv
+all: prepare run
 
-run: $(KNN_RENDER_LATEX)
+run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX)
 
 #output_file.csv: .flags/PERCENTAGE
 #	@echo "$(PERCENTAGE)" > output_file.csv
@@ -120,10 +121,15 @@ csv/%.csv: data/%.csv
 	@mkdir -p csv/
 	cp $< $@
 
-# .csv to .jobfile
-$(JOBFILE_COMBINED): $(CSV_FILES)
+# .csv to .jobfiles
+jobs/%.jobfile: csv/%.csv
+	@mkdir -p jobs
+	cat $< | $(CSV_TO_JOBFILE) $< > $@
+
+# .jobfiles to .jobfile (combine)
+$(JOBFILE_COMBINED): $(JOB_FILES)
 	@mkdir -p jobfiles
-	$(CSV_TO_JOBFILE) csv/ > $@
+	cat $^ > $@
 
 # .jobfile to .jobfiles (split)
 $(JOBFILE_QRY) $(JOBFILE_REF): $(JOBFILE_COMBINED) .flags/PERCENTAGE
@@ -158,7 +164,7 @@ $(KNN_CONFUSION_MODEL_JSON): $(KNN_DTW_MODEL_JSON)
 # .json to .json (processing) - using model
 $(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) $(KNN_CONFUSION_MODEL_JSON) .flags/KNN_CONFUSION_ARGS
 	@mkdir -p output
-	cat $(KNN_DTW_JSON) | $(KNN_CONFUSION) --statistics $(KNN_CONFUSION_MODEL_JSON) $(KNN_CONFUSION_ARGS) > $@
+	cat $(KNN_DTW_JSON) | $(KNN_CONFUSION) --statistics=$(KNN_CONFUSION_MODEL_JSON) $(KNN_CONFUSION_ARGS) > $@
 else
 # .json to .json (processing)
 $(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
@@ -179,9 +185,9 @@ $(KNN_RENDER_RESUME): $(KNN_CONFUSION_JSON)
 # .json to .pdf
 $(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
 	@mkdir -p output
-	cat $< | $(KNN_RENDER) $(KNN_RENDER_LATEX_ARGS) | lualatex -jobname $@
+	cat $< | $(KNN_RENDER) $(KNN_RENDER_LATEX_ARGS) | lualatex -jobname $(@D)/$(basename $(@F))
 
 # These don't really output files
 .PHONY: all prepare run clean force build_CSV_TO_JOBFILE build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
 # These are build by multi-target rule, so non-parallel for this one
-.NOTPARALLEL: $(JOBFILE_QRY) $(JOBFILE_REF)
+#.NOTPARALLEL: $(JOBFILE_QRY) $(JOBFILE_REF)
