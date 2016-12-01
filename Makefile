@@ -3,9 +3,6 @@
 RAW_TO_CSV_FOLDER=../cpu_post_processing
 RAW_TO_CSV=$(RAW_TO_CSV_FOLDER)/dist/index.js 
 
-CSV_TO_JOBFILE_FOLDER=../csv-to-jobfile
-CSV_TO_JOBFILE=$(CSV_TO_JOBFILE_FOLDER)/index.js
-
 JOBFILE_SPLITTER_FOLDER=../jobfile-splitter
 JOBFILE_SPLITTER=$(JOBFILE_SPLITTER_FOLDER)/index.js
 
@@ -74,15 +71,9 @@ clean:
 # Install software
 #-----------------
 prepare: $(RAW_TO_CSV) $(LOCAL_KNN_DTW)
-	@if [ ! -d $(CSV_TO_JOBFILE_FOLDER)/node_modules/ ]; then make build_CSV_TO_JOBFILE; fi
 	@if [ ! -d $(JOBFILE_SPLITTER_FOLDER)/node_modules/ ]; then make build_JOBFILE_SPLITTER; fi
 	@if [ ! -d $(KNN_CONFUSION_FOLDER)/node_modules/ ]; then make build_KNN_CONFUSION; fi
 	@if [ ! -d $(KNN_RENDER_FOLDER)/node_modules/ ]; then make build_KNN_RENDER; fi
-
-build_CSV_TO_JOBFILE:
-	@echo ""
-	@echo "Installing csv-to-jobfile"
-	cd $(RAW_TO_CSV_FOLDER) && npm i 1>/dev/null
 
 build_JOBFILE_SPLITTER:
 	@echo ""
@@ -124,7 +115,12 @@ csv/%.csv: data/%.csv
 # .csv to .jobfiles
 jobs/%.jobfile: csv/%.csv
 	@mkdir -p jobs
-	cat $< | $(CSV_TO_JOBFILE) $< > $@
+	# This replaces $(CSV_TO_JOBFILE)
+	basename $< | cut -f1 -d'_' | tr --delete '\n' > $@
+	echo " $<" >> $@
+	cat $< | tail -n +2 | cut -f1 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
+	echo "" >> $@
+	cat $< | tail -n +2 | cut -f2 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
 
 # .jobfiles to .jobfile (combine)
 $(JOBFILE_COMBINED): $(JOB_FILES)
@@ -143,7 +139,6 @@ ifeq ($(REMOTE_KNN),true)
 	$(REMOTE_KNN_DTW) $(JOBFILE_REF) $(JOBFILE_QRY) > $@
 else
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_QRY) --reference_filename=$(JOBFILE_REF) > $@
-	echo "WOW" > $@
 endif
 
 ifeq ($(USE_MODEL),true)
@@ -188,6 +183,6 @@ $(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
 	cat $< | $(KNN_RENDER) $(KNN_RENDER_LATEX_ARGS) | lualatex -jobname $(@D)/$(basename $(@F))
 
 # These don't really output files
-.PHONY: all prepare run clean force build_CSV_TO_JOBFILE build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
+.PHONY: all prepare run clean force build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
 # These are build by multi-target rule, so non-parallel for this one
 #.NOTPARALLEL: $(JOBFILE_QRY) $(JOBFILE_REF)
