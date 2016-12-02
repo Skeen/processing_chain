@@ -122,9 +122,9 @@ jobs/%.jobfile: csv/%.csv
 	# This replaces $(CSV_TO_JOBFILE)
 	basename $< | cut -f1 -d'_' | tr --delete '\n' > $@
 	echo " $<" >> $@
-	cat $< | tail -n +2 | cut -f1 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
-	echo "" >> $@
 	cat $< | tail -n +2 | cut -f2 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
+	echo "" >> $@
+	cat $< | tail -n +2 | cut -f1 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
 	echo "" >> $@
 
 # .jobfiles to .jobfile (combine)
