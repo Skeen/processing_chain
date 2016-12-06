@@ -12,7 +12,8 @@ LOCAL_KNN_DTW_FOLDER=$(PROJECT_FOLDER)/knn_dtw
 LOCAL_KNN_DTW=$(LOCAL_KNN_DTW_FOLDER)/clf.run
 
 REMOTE_KNN_DTW_FOLDER=$(PROJECT_FOLDER)/knn_distrib
-REMOTE_KNN_DTW=$(REMOTE_KNN_DTW_FOLDER)/request.sh
+REMOTE_KNN_DTW_REQUEST=$(REMOTE_KNN_DTW_FOLDER)/request.sh
+REMOTE_KNN_DTW_RESPONSE=$(REMOTE_KNN_DTW_FOLDER)/response.sh
 
 KNN_CONFUSION_FOLDER=$(PROJECT_FOLDER)/knn_confusion
 KNN_CONFUSION=$(KNN_CONFUSION_FOLDER)/index.js
@@ -32,9 +33,11 @@ JOBFILE_SPLIT=jobfiles/lock
 JOBFILE_QRY=jobfiles/qry.jobfile
 JOBFILE_REF=jobfiles/ref.jobfile
 
+KNN_DTW_NAME=output/dtw.output.name
 KNN_DTW_JSON=output/dtw.output.json
 KNN_CONFUSION_JSON=output/confusion.output.json
 
+KNN_DTW_MODEL_NAME=output/dtw.model.name
 KNN_DTW_MODEL_JSON=output/dtw.model.json
 KNN_CONFUSION_MODEL_JSON=output/confusion.model.json
 
@@ -143,22 +146,34 @@ $(JOBFILE_SPLIT): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 $(JOBFILE_QRY): $(JOBFILE_SPLIT)
 $(JOBFILE_REF): $(JOBFILE_SPLIT)
 
+ifeq ($(REMOTE_KNN),true)
+$(KNN_DTW_NAME): $(JOBFILE_QRY) $(JOBFILE_REF)
+	@mkdir -p output
+	$(REMOTE_KNN_DTW_REQUEST) $(JOBFILE_REF) $(JOBFILE_QRY) "" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
+
+$(KNN_DTW_JSON): $(KNN_DTW_NAME)
+	@mkdir -p output
+	cat $< | xargs $(REMOTE_KNN_DTW_RESPONSE) > $@
+else
 # .jobfiles to .json
 $(KNN_DTW_JSON): $(JOBFILE_QRY) $(JOBFILE_REF)
 	@mkdir -p output
-ifeq ($(REMOTE_KNN),true)
-	$(REMOTE_KNN_DTW) $(JOBFILE_REF) $(JOBFILE_QRY) "" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
-else
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_QRY) --reference_filename=$(JOBFILE_REF) > $@
 endif
 
 ifeq ($(USE_MODEL),true)
-# Generate model using dtw
-$(KNN_DTW_MODEL_JSON): $(JOBFILE_COMBINED) .flags/USE_MODEL
-	@mkdir -p output
 ifeq ($(REMOTE_KNN),true)
-	$(REMOTE_KNN_DTW) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) "-m" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
+$(KNN_DTW_MODEL_NAME): $(JOBFILE_COMBINED) .flags/USE_MODEL
+	@mkdir -p output
+	$(REMOTE_KNN_DTW_REQUEST) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) "-m" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
+
+$(KNN_DTW_MODEL_JSON): $(KNN_DTW_MODEL_NAME)
+	@mkdir -p output
+	cat $< | xargs $(REMOTE_KNN_DTW_RESPONSE) > $@
 else
+# .jobfiles to .json
+$(KNN_DTW_MODEL_JSON): $(JOBFILE_COMBINED)
+	@mkdir -p output
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_COMBINED) --reference_filename=$(JOBFILE_COMBINED) -m > $@
 endif
 
