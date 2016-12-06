@@ -28,6 +28,7 @@ CSV_FILES := $(addprefix csv/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_
 JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
 JOBFILE_COMBINED=jobfiles/combined.jobfile
+JOBFILE_SPLIT=jobfiles/lock
 JOBFILE_QRY=jobfiles/qry.jobfile
 JOBFILE_REF=jobfiles/ref.jobfile
 
@@ -46,8 +47,8 @@ KNN_RENDER_LATEX=output/render.latex.pdf
 PERCENTAGE=0.5
 REMOTE_KNN=true
 REMOTE_KNN_SPLIT=5
-REMOTE_KNN_TIMEOUT=100000
-KNN_CONFUSION_ARGS=-f -k3 -n 1.7 -q 12
+REMOTE_KNN_TIMEOUT=1000000
+KNN_CONFUSION_ARGS=-f -k 3
 KNN_RENDER_LATEX_ARGS=-lscx
 USE_MODEL=true
 
@@ -62,6 +63,7 @@ run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX)
 #	@echo "BUILD"
 
 clean:
+	rm -rf jobs
 	rm -rf jobfiles
 	rm -rf output
 	rm -rf csv
@@ -133,9 +135,13 @@ $(JOBFILE_COMBINED): $(JOB_FILES)
 	cat $^ > $@
 
 # .jobfile to .jobfiles (split)
-$(JOBFILE_QRY) $(JOBFILE_REF): $(JOBFILE_COMBINED) .flags/PERCENTAGE
+$(JOBFILE_SPLIT): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 	@mkdir -p jobfiles
 	cat $< | $(JOBFILE_SPLITTER) -O jobfiles -rbp $(PERCENTAGE)
+	touch $@
+
+$(JOBFILE_QRY): $(JOBFILE_SPLIT)
+$(JOBFILE_REF): $(JOBFILE_SPLIT)
 
 # .jobfiles to .json
 $(KNN_DTW_JSON): $(JOBFILE_QRY) $(JOBFILE_REF)
@@ -164,12 +170,12 @@ $(KNN_CONFUSION_MODEL_JSON): $(KNN_DTW_MODEL_JSON)
 # .json to .json (processing) - using model
 $(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) $(KNN_CONFUSION_MODEL_JSON) .flags/KNN_CONFUSION_ARGS
 	@mkdir -p output
-	cat $(KNN_DTW_JSON) | $(KNN_CONFUSION) --statistics=$(KNN_CONFUSION_MODEL_JSON) $(KNN_CONFUSION_ARGS) > $@
+	cat $(KNN_DTW_JSON) | $(KNN_CONFUSION) --statistics=$(KNN_CONFUSION_MODEL_JSON) $(KNN_CONFUSION_ARGS) | python -m json.tool > $@
 else
 # .json to .json (processing)
 $(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
 	@mkdir -p output
-	cat $< | $(KNN_CONFUSION) $(KNN_CONFUSION_ARGS) > $@
+	cat $< | $(KNN_CONFUSION) $(KNN_CONFUSION_ARGS) | python -m json.tool > $@
 endif
 
 # .json to .json (processing)
@@ -191,5 +197,4 @@ $(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
 
 # These don't really output files
 .PHONY: all prepare run clean force build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
-# These are build by multi-target rule, so non-parallel for this one
-#.NOTPARALLEL: $(JOBFILE_QRY) $(JOBFILE_REF)
+.SECONDARY: $(JOB_FILES) $(CSV_FILES)
