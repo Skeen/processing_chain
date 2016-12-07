@@ -25,8 +25,8 @@ KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 #------
 INPUT_REGEX := $(shell cat input/REGEX)
 INPUT_FILES := $(shell cat input/FILES)
-RAW_INPUT_FILES := $(addprefix data/,$(notdir $(INPUT_FILES:.raw=.raw)))
-CSV_INPUT_FILES := $(addprefix data/,$(notdir $(INPUT_FILES:.csv=.csv)))
+RAW_INPUT_FILES := $(addprefix data/,$(filter %.raw,$(INPUT_FILES)))
+CSV_INPUT_FILES := $(addprefix data/,$(filter %.csv,$(INPUT_FILES)))
 CSV_FILES := $(addprefix csv/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
 JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
