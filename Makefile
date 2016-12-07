@@ -23,8 +23,10 @@ KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 
 # Files
 #------
-RAW_INPUT_FILES := $(wildcard data/*.raw)
-CSV_INPUT_FILES := $(wildcard data/*.csv)
+INPUT_REGEX := $(shell cat input/REGEX)
+INPUT_FILES := $(shell cat input/FILES)
+RAW_INPUT_FILES := $(addprefix data/,$(notdir $(INPUT_FILES:.raw=.raw)))
+CSV_INPUT_FILES := $(addprefix data/,$(notdir $(INPUT_FILES:.csv=.csv)))
 CSV_FILES := $(addprefix csv/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
 JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
@@ -108,6 +110,16 @@ $(LOCAL_KNN_DTW):
 	@echo ""
 	@echo "Installing knn-dtw (local)"
 	cd $(LOCAL_KNN_DTW_FOLDER) && make -j8 1>/dev/null
+
+# Downloading
+#------------
+data/%.raw:
+	@mkdir -p data
+	curl --silent http://skeen.website:3001/symlinks/$(INPUT_REGEX)/$(@F) > $@
+
+data/%.csv:
+	@mkdir -p data
+	curl --silent http://skeen.website:3001/symlinks/$(INPUT_REGEX)/$(@F) > $@
 
 # Processing
 #-----------
@@ -210,6 +222,10 @@ $(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
 	@rm $(@D)/$(basename $(@F)).log
 	@rm $(@D)/$(basename $(@F)).aux
 
+print: $(KNN_RENDER_LATEX) $(KNN_RENDER_RESUME)
+	lpr -P Ada-222-b -o fit-to-page $(KNN_RENDER_LATEX)
+	lpr -P Ada-222-b $(KNN_RENDER_RESUME)
+
 # These don't really output files
-.PHONY: all prepare run clean force build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
-.SECONDARY: $(JOB_FILES) $(CSV_FILES)
+.PHONY: all prepare run clean force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
+.PRECIOUS: $(INPUT_FILES) $(RAW_INPUT_FILES) $(CSV_INPUT_FILES) $(CSV_FILES) $(JOB_FILES) 
