@@ -9,7 +9,7 @@ download_dataset()
     OUTPUT_FOLDER=$2
     echo -e "Downloading $INPUT_REGEX > $OUTPUT_FOLDER/*...\c"
     # Download the Set
-    scp root@skeen.website:/root/reading_reciever/symlinks/$INPUT_REGEX $OUTPUT_FOLDER 1>/dev/null
+    rsync -ravzp --copy-links root@skeen.website:/root/reading_reciever/symlinks/$INPUT_REGEX $OUTPUT_FOLDER/
     echo "OK"
 }
 
@@ -74,12 +74,6 @@ echo ""
 echo ""
 echo "Starting ssh-agent" | boxes
 ssh_agent
-
-# Clean data folder
-echo ""
-echo ""
-echo "Cleaning data folder" | boxes
-rm -rf data
 
 ## Download the datasets
 echo ""
