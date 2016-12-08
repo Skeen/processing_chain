@@ -25,8 +25,8 @@ KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 #------
 INPUT_REGEX := $(shell cat input/REGEX)
 INPUT_FILES := $(shell cat input/FILES)
-RAW_INPUT_FILES := $(addprefix data/,$(filter %.raw,$(INPUT_FILES)))
-CSV_INPUT_FILES := $(addprefix data/,$(filter %.csv,$(INPUT_FILES)))
+RAW_INPUT_FILES := $(addprefix download/,$(filter %.raw,$(INPUT_FILES)))
+CSV_INPUT_FILES := $(addprefix download/,$(filter %.csv,$(INPUT_FILES)))
 CSV_FILES := $(addprefix csv/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
 JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
@@ -113,13 +113,24 @@ $(LOCAL_KNN_DTW):
 
 # Downloading
 #------------
-data/%.raw:
-	@mkdir -p data
-	curl --silent http://skeen.website:3001/symlinks/$(INPUT_REGEX)/$(@F) > $@
+download/%:
+	@mkdir -p download
+	curl --fail --silent -o $@ http://skeen.website:3001/symlinks/$(INPUT_REGEX)/$(@F)
 
-data/%.csv:
+download/%.md5: download/%
+	@mkdir -p download
+	md5sum $< | cut -f1 -d' ' | tr --delete '\n' > $@
+
+data/%: download/% download/%.md5
 	@mkdir -p data
-	curl --silent http://skeen.website:3001/symlinks/$(INPUT_REGEX)/$(@F) > $@
+	if [ "$(shell curl --fail --silent http://skeen.website:3001/md5/$(INPUT_REGEX)/$(@F))" = "$(shell cat download/$(@F).md5)" ]; then \
+		echo "MD5 check passed: '$@'"; \
+		cp $< $@; \
+	else \
+		echo "MD5 check failed: '$@', removing $<"; \
+		rm download/$(@F) download/$(@F).md5; \
+		false; \
+	fi
 
 # Processing
 #-----------
