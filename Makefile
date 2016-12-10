@@ -174,17 +174,21 @@ jobs/%.jobfile: csv/%.csv
 	echo "" >> $@
 	cat $< | tail -n +2 | cut -f1 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
 	echo "" >> $@
+	cat $@ | ../jobfile-validator/index.js
 
 # .jobfiles to .jobfile (combine)
 $(JOBFILE_COMBINED): $(JOB_FILES)
 	@mkdir -p jobfiles
 	cat $^ > $@
+	cat $@ | ../jobfile-validator/index.js
 
 # .jobfile to .jobfiles (split)
 $(JOBFILE_SPLIT): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 	@mkdir -p jobfiles
 	cat $< | $(JOBFILE_SPLITTER) -O jobfiles -rbp $(PERCENTAGE)
 	touch $@
+	cat $(JOBFILE_QRY) | ../jobfile-validator/index.js
+	cat $(JOBFILE_REF) | ../jobfile-validator/index.js
 
 $(JOBFILE_QRY): $(JOBFILE_SPLIT)
 $(JOBFILE_REF): $(JOBFILE_SPLIT)
