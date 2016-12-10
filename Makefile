@@ -52,7 +52,7 @@ KNN_RENDER_LATEX=output/render.latex.pdf
 PERCENTAGE=0.5
 REMOTE_KNN=true
 REMOTE_KNN_SPLIT=5
-REMOTE_KNN_TIMEOUT=1000000
+REMOTE_KNN_TIMEOUT=100000000
 KNN_CONFUSION_ARGS=-f -k 3
 KNN_RENDER_LATEX_ARGS=-lscx
 USE_MODEL=true
@@ -68,6 +68,7 @@ run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX)
 #	@echo "BUILD"
 
 clean:
+	rm -rf data
 	rm -rf jobs
 	rm -rf jobfiles
 	rm -rf output
@@ -123,7 +124,7 @@ download/%.md5: download/%
 
 data/%: download/% download/%.md5
 	@mkdir -p data
-	if [ "$(shell curl --fail --silent http://skeen.website:3001/md5/$(INPUT_REGEX)/$(@F))" = "$(shell cat download/$(@F).md5)" ]; then \
+	@if [ "$(shell curl --fail --silent http://skeen.website:3001/md5/$(INPUT_REGEX)/$(@F))" = "$(shell cat download/$(@F).md5)" ]; then \
 		echo "MD5 check passed: '$@'"; \
 		cp $< $@; \
 	else \
