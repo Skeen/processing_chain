@@ -64,6 +64,16 @@ all: prepare run
 
 run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX)
 
+jobfiles: $(JOB_FILES)
+
+csvfiles: $(CSV_FILES)
+
+datafiles: $(DATA_FILES)
+
+csvinputfiles: $(CSV_INPUT_FILES)
+
+rawinputfiles: $(RAW_INPUT_FILES)
+
 #output_file.csv: .flags/PERCENTAGE
 #	@echo "$(PERCENTAGE)" > output_file.csv
 #	@echo "BUILD"
