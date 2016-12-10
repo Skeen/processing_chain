@@ -9,7 +9,7 @@ download_dataset()
     OUTPUT_FOLDER=$2
     echo -e "Downloading file index to $OUTPUT_FOLDER...\c"
     # Download the Set
-    ssh root@skeen.website "ls reading_reciever/symlinks/$INPUT_REGEX/" | grep -v ".json" > $OUTPUT_FOLDER/FILES
+    ssh root@skeen.website "ls reading_reciever/symlinks/$INPUT_REGEX/" > $OUTPUT_FOLDER/FILES
     echo $INPUT_REGEX > $OUTPUT_FOLDER/REGEX
     echo "OK"
 }

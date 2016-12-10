@@ -3,4 +3,6 @@ data
 jobs
 jobfiles
 output
+input
+download
 .flags
