@@ -107,10 +107,14 @@ $(RAW_TO_CSV):
 	@echo "Installing cpu processing"
 	cd $(RAW_TO_CSV_FOLDER) && npm run compile 1>/dev/null
 
+ifeq ($(REMOTE_KNN),true)
+$(LOCAL_KNN_DTW):
+else
 $(LOCAL_KNN_DTW):
 	@echo ""
 	@echo "Installing knn-dtw (local)"
 	cd $(LOCAL_KNN_DTW_FOLDER) && make -j8 1>/dev/null
+endif
 
 # Downloading
 #------------
