@@ -39,6 +39,6 @@ cd $DIR
 ## Download the datasets
 echo ""
 echo ""
-echo "Downloading datasets" | boxes
+echo "Downloading datasets"
 mkdir -p input/
 download_dataset "$INPUT_REGEX" "input"
