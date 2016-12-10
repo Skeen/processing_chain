@@ -27,7 +27,8 @@ INPUT_REGEX := $(shell cat input/REGEX)
 INPUT_FILES := $(shell cat input/FILES)
 RAW_INPUT_FILES := $(addprefix download/,$(filter %.raw,$(INPUT_FILES)))
 CSV_INPUT_FILES := $(addprefix download/,$(filter %.csv,$(INPUT_FILES)))
-CSV_FILES := $(addprefix csv/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
+DATA_FILES := $(addprefix data/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
+CSV_FILES := $(addprefix csv/,$(notdir $(DATA_FILES)))
 JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
 JOBFILE_COMBINED=jobfiles/combined.jobfile
@@ -244,4 +245,4 @@ print: $(KNN_RENDER_LATEX) $(KNN_RENDER_RESUME)
 
 # These don't really output files
 .PHONY: all prepare run clean force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
-.PRECIOUS: $(INPUT_FILES) $(RAW_INPUT_FILES) $(CSV_INPUT_FILES) $(CSV_FILES) $(JOB_FILES) 
+.PRECIOUS: $(INPUT_FILES) $(RAW_INPUT_FILES) $(CSV_INPUT_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES) 
