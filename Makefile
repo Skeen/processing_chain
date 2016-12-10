@@ -148,7 +148,7 @@ data/%: download/%.download download/%.md5
 		cp $< $@; \
 	else \
 		echo "MD5 check failed: '$@', removing $<"; \
-		rm download/$(@F) download/$(@F).md5; \
+		rm download/$(@F).download download/$(@F).md5; \
 		false; \
 	fi
 
