@@ -25,10 +25,14 @@ KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 #------
 INPUT_REGEX := $(shell cat input/REGEX)
 INPUT_FILES := $(shell cat input/FILES)
-RAW_INPUT_FILES := $(addprefix download/,$(filter %.raw,$(INPUT_FILES)))
-CSV_INPUT_FILES := $(addprefix download/,$(filter %.csv,$(INPUT_FILES)))
-DATA_FILES := $(addprefix data/,$(notdir $(RAW_INPUT_FILES:.raw=.csv) $(CSV_INPUT_FILES:.csv=.csv)))
-CSV_FILES := $(addprefix csv/,$(notdir $(DATA_FILES)))
+# Download files and MD5 files, store in download/
+DOWNLOAD_FILES := $(addprefix download/,$(addsuffix .download, $(INPUT_FILES)))
+MD5_FILES := $(addprefix download/,$(addsuffix .md5, $(INPUT_FILES)))
+# Data files are validated .raw and .csv files stored in data/
+DATA_FILES := $(addprefix data/,$(notdir $(filter %.raw %.csv,$(basename $(DOWNLOAD_FILES)))))
+# CSV files are processed .raw files and .csv files stored in csv/
+CSV_FILES := $(addprefix csv/,$(notdir $(addsuffix .csv, $(basename $(DATA_FILES)))))
+# Job files are processed .csv files and are stored in jobs/
 JOB_FILES := $(addprefix jobs/,$(notdir $(CSV_FILES:.csv=.jobfile)))
 
 JOBFILE_COMBINED=jobfiles/combined.jobfile
@@ -255,4 +259,4 @@ print: $(KNN_RENDER_LATEX) $(KNN_RENDER_RESUME)
 
 # These don't really output files
 .PHONY: all prepare run clean force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
-.PRECIOUS: $(INPUT_FILES) $(RAW_INPUT_FILES) $(CSV_INPUT_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES) 
+.PRECIOUS: $(INPUT_FILES) $(DOWNLOAD_FILES) $(MD5_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES)
