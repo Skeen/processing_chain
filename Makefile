@@ -8,6 +8,9 @@ RAW_TO_CSV=$(RAW_TO_CSV_FOLDER)/dist/index.js
 JOBFILE_SPLITTER_FOLDER=$(PROJECT_FOLDER)/jobfile-splitter
 JOBFILE_SPLITTER=$(JOBFILE_SPLITTER_FOLDER)/index.js
 
+JOBFILE_VALIDATOR_FOLDER=$(PROJECT_FOLDER)/jobfile-validator
+JOBFILE_VALIDATOR=$(JOBFILE_VALIDATOR_FOLDER)/index.js
+
 LOCAL_KNN_DTW_FOLDER=$(PROJECT_FOLDER)/knn_dtw
 LOCAL_KNN_DTW=$(LOCAL_KNN_DTW_FOLDER)/clf.run
 
@@ -167,28 +170,31 @@ csv/%.csv: data/%.csv
 # .csv to .jobfiles
 jobs/%.jobfile: csv/%.csv
 	@mkdir -p jobs
-	# This replaces $(CSV_TO_JOBFILE)
+	@# This replaces $(CSV_TO_JOBFILE)
 	basename $< | cut -f1 -d'_' | tr --delete '\n' > $@
 	echo " $<" >> $@
 	cat $< | tail -n +2 | cut -f2 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
 	echo "" >> $@
 	cat $< | tail -n +2 | cut -f1 -d',' | tr --delete ' ' | tr '\n' ' ' >> $@
 	echo "" >> $@
-	cat $@ | ../jobfile-validator/index.js
+	@# Validate that the jobfile was created correctly (very no data is dropped too)
+	cat $@ | $(JOBFILE_VALIDATOR) $(shell cat $< | wc -l | xargs expr -1 + ) || rm $@
 
 # .jobfiles to .jobfile (combine)
 $(JOBFILE_COMBINED): $(JOB_FILES)
 	@mkdir -p jobfiles
 	cat $^ > $@
-	cat $@ | ../jobfile-validator/index.js
+	@# We trust cat to work
+	@#cat $@ | ../jobfile-validator/index.js
 
 # .jobfile to .jobfiles (split)
 $(JOBFILE_SPLIT): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 	@mkdir -p jobfiles
 	cat $< | $(JOBFILE_SPLITTER) -O jobfiles -rbp $(PERCENTAGE)
 	touch $@
-	cat $(JOBFILE_QRY) | ../jobfile-validator/index.js
-	cat $(JOBFILE_REF) | ../jobfile-validator/index.js
+	@# Validate output jobfiles was created correctly
+	cat $(JOBFILE_QRY) | ../jobfile-validator/index.js || rm $(JOBFILE_QRY) $@
+	cat $(JOBFILE_REF) | ../jobfile-validator/index.js || rm $(JOBFILE_REF) $@
 
 $(JOBFILE_QRY): $(JOBFILE_SPLIT)
 $(JOBFILE_REF): $(JOBFILE_SPLIT)
