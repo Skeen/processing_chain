@@ -77,13 +77,9 @@ csvfiles: $(CSV_FILES)
 
 datafiles: $(DATA_FILES)
 
-csvinputfiles: $(CSV_INPUT_FILES)
+md5files: $(MD5_FILES)
 
-rawinputfiles: $(RAW_INPUT_FILES)
-
-#output_file.csv: .flags/PERCENTAGE
-#	@echo "$(PERCENTAGE)" > output_file.csv
-#	@echo "BUILD"
+downloadfiles: $(DOWNLOAD_FILES)
 
 clean:
 	rm -rf data
@@ -269,4 +265,4 @@ print: $(KNN_RENDER_LATEX) $(KNN_RENDER_RESUME)
 
 # These don't really output files
 .PHONY: all prepare run clean force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
-.PRECIOUS: $(INPUT_FILES) $(DOWNLOAD_FILES) $(MD5_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES)
+.SECONDARY: $(INPUT_FILES) $(DOWNLOAD_FILES) $(MD5_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES)
