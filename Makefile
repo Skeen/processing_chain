@@ -21,6 +21,9 @@ REMOTE_KNN_DTW_RESPONSE=$(REMOTE_KNN_DTW_FOLDER)/response.sh
 KNN_CONFUSION_FOLDER=$(PROJECT_FOLDER)/knn_confusion
 KNN_CONFUSION=$(KNN_CONFUSION_FOLDER)/index.js
 
+KNN_COMBINER_FOLDER=$(PROJECT_FOLDER)/knn_combiner
+KNN_COMBINER=$(KNN_COMBINER_FOLDER)/index.js
+
 KNN_RENDER_FOLDER=$(PROJECT_FOLDER)/knn_render
 KNN_RENDER=$(KNN_RENDER_FOLDER)/index.js
 
@@ -44,10 +47,13 @@ JOBFILE_QRY=jobfiles/qry.jobfile
 JOBFILE_REF=jobfiles/ref.jobfile
 
 KNN_DTW_NAME=output/dtw.output.name
-KNN_DTW_JSON=output/dtw.output.json
+KNN_DTW_TAR=output/dtw.output.tar.gz
+KNN_DTW_JSONS=output/dtw.output/PROCESSED
+KNN_CONFUSION_JSONS=output/confusion.output/DONE
 KNN_CONFUSION_JSON=output/confusion.output.json
 
 KNN_DTW_MODEL_NAME=output/dtw.model.name
+KNN_DTW_MODEL_TAR=output/dtw.model.tar.gz
 KNN_DTW_MODEL_JSON=output/dtw.model.json
 KNN_CONFUSION_MODEL_JSON=output/confusion.model.json
 
@@ -61,7 +67,7 @@ PERCENTAGE=0.5
 REMOTE_KNN=true
 REMOTE_KNN_SPLIT=5
 REMOTE_KNN_TIMEOUT=100000000
-KNN_CONFUSION_ARGS=-f -k 3
+KNN_CONFUSION_ARGS=-M --knn=3
 KNN_RENDER_LATEX_ARGS=-lscxp
 USE_MODEL=true
 
@@ -69,7 +75,7 @@ USE_MODEL=true
 #-------------
 all: prepare run
 
-run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX)
+run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX) $(KNN_RENDER_GROUND)
 
 jobfiles: $(JOB_FILES)
 
@@ -99,6 +105,7 @@ clean:
 prepare: $(RAW_TO_CSV) $(LOCAL_KNN_DTW)
 	@if [ ! -d $(JOBFILE_SPLITTER_FOLDER)/node_modules/ ]; then make build_JOBFILE_SPLITTER; fi
 	@if [ ! -d $(KNN_CONFUSION_FOLDER)/node_modules/ ]; then make build_KNN_CONFUSION; fi
+	@if [ ! -d $(KNN_COMBINER_FOLDER)/node_modules/ ]; then make build_KNN_COMBINER; fi
 	@if [ ! -d $(KNN_RENDER_FOLDER)/node_modules/ ]; then make build_KNN_RENDER; fi
 
 build_JOBFILE_SPLITTER:
@@ -110,6 +117,11 @@ build_KNN_CONFUSION:
 	@echo ""
 	@echo "Installing knn_confusion"
 	cd $(KNN_CONFUSION_FOLDER) && npm i 1>/dev/null
+
+build_KNN_COMBINER:
+	@echo ""
+	@echo "Installing knn_combiner"
+	cd $(KNN_COMBINER_FOLDER) && npm i 1>/dev/null
 
 build_KNN_RENDER:
 	@echo ""
@@ -200,47 +212,73 @@ $(KNN_DTW_NAME): $(JOBFILE_QRY) $(JOBFILE_REF)
 	@mkdir -p output
 	$(REMOTE_KNN_DTW_REQUEST) $(JOBFILE_REF) $(JOBFILE_QRY) "" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
 
-$(KNN_DTW_JSON): $(KNN_DTW_NAME)
+$(KNN_DTW_TAR): $(KNN_DTW_NAME)
 	@mkdir -p output
 	cat $< | xargs $(REMOTE_KNN_DTW_RESPONSE) > $@
 else
 # .jobfiles to .json
-$(KNN_DTW_JSON): $(JOBFILE_QRY) $(JOBFILE_REF)
+$(KNN_DTW_TAR): $(JOBFILE_QRY) $(JOBFILE_REF)
 	@mkdir -p output
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_QRY) --reference_filename=$(JOBFILE_REF) > $@
 endif
 
-ifeq ($(USE_MODEL),true)
 ifeq ($(REMOTE_KNN),true)
-$(KNN_DTW_MODEL_NAME): $(JOBFILE_COMBINED) .flags/USE_MODEL
+$(KNN_DTW_MODEL_NAME): $(JOBFILE_COMBINED)
 	@mkdir -p output
 	$(REMOTE_KNN_DTW_REQUEST) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) "-m" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
 
-$(KNN_DTW_MODEL_JSON): $(KNN_DTW_MODEL_NAME)
+$(KNN_DTW_MODEL_TAR): $(KNN_DTW_MODEL_NAME)
 	@mkdir -p output
 	cat $< | xargs $(REMOTE_KNN_DTW_RESPONSE) > $@
 else
 # .jobfiles to .json
-$(KNN_DTW_MODEL_JSON): $(JOBFILE_COMBINED)
+$(KNN_DTW_MODEL_TAR): $(JOBFILE_COMBINED)
 	@mkdir -p output
 	$(LOCAL_KNN_DTW) --query_filename=$(JOBFILE_COMBINED) --reference_filename=$(JOBFILE_COMBINED) -m > $@
 endif
+
+# Unpack tar file, and combine pieces into a single json
+$(KNN_DTW_MODEL_JSON): $(KNN_DTW_MODEL_TAR)
+	$(eval TMP_FOLDER=$(shell echo $@ | sed 's#\(.*\)\..*#\1#'))
+	mkdir -p $(TMP_FOLDER)
+	cd $(TMP_FOLDER) && tar -xzf $(shell realpath $<) --strip-components 1 
+	cat $(TMP_FOLDER)/* | tr --delete '\n' | tr ',' '\n' | sed 's/\]\[/,/g' | tr '\n' ',' > $@
 
 # Generate model
 $(KNN_CONFUSION_MODEL_JSON): $(KNN_DTW_MODEL_JSON)
 	@mkdir -p output
 	cat $< | $(KNN_CONFUSION) --modelling > $@
 
-# .json to .json (processing) - using model
-$(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) $(KNN_CONFUSION_MODEL_JSON) .flags/KNN_CONFUSION_ARGS
-	@mkdir -p output
-	cat $(KNN_DTW_JSON) | $(KNN_CONFUSION) --statistics=$(KNN_CONFUSION_MODEL_JSON) $(KNN_CONFUSION_ARGS) | python -m json.tool > $@
+# Unpack our tar file, and create dummy file
+$(KNN_DTW_JSONS): $(KNN_DTW_TAR)
+	$(eval DTW_JSONS_DIR=$(shell dirname $@))
+	@mkdir -p $(DTW_JSONS_DIR)
+	cd $(DTW_JSONS_DIR) && tar -xzf $(shell realpath $<) --strip-components 1 
+	echo "{}" > $@
+
+ifeq ($(USE_MODEL),true)
+# Use sub-makefile to parallel process each file
+$(KNN_CONFUSION_JSONS): $(KNN_DTW_JSONS) $(KNN_CONFUSION_MODEL_JSON) .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
+	INPUT_FOLDER=$(shell dirname $<) \
+	OUTPUT_FOLDER=$(shell dirname $@) \
+	KNN_CONFUSION_ARGS="$(KNN_CONFUSION_ARGS)" \
+	MODEL=$(MODEL) \
+		make -f Makefile_helper -j8
+	echo "{}" > $@
 else
-# .json to .json (processing)
-$(KNN_CONFUSION_JSON): $(KNN_DTW_JSON) .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
-	@mkdir -p output
-	cat $< | $(KNN_CONFUSION) $(KNN_CONFUSION_ARGS) | python -m json.tool > $@
+# Use sub-makefile to parallel process each file
+$(KNN_CONFUSION_JSONS): $(KNN_DTW_JSONS) .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
+	INPUT_FOLDER=$(shell dirname $<) \
+	OUTPUT_FOLDER=$(shell dirname $@) \
+	KNN_CONFUSION_ARGS="$(KNN_CONFUSION_ARGS)" \
+	MODEL= \
+		make -f Makefile_helper -j8
+	echo "{}" > $@
 endif
+
+# Combine confusion files
+$(KNN_CONFUSION_JSON): $(KNN_CONFUSION_JSONS)
+	$(KNN_COMBINER) $(shell realpath $(shell dirname $<)) > $@
 
 # .json to .json (processing)
 $(KNN_RENDER_GROUND): $(KNN_CONFUSION_JSON)
@@ -264,5 +302,5 @@ print: $(KNN_RENDER_LATEX) $(KNN_RENDER_RESUME)
 	lpr -P Ada-222-b $(KNN_RENDER_RESUME)
 
 # These don't really output files
-.PHONY: all prepare run clean force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_RENDER
+.PHONY: all prepare run clean force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_COMBINER build_KNN_RENDER
 .SECONDARY: $(INPUT_FILES) $(DOWNLOAD_FILES) $(MD5_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES)
