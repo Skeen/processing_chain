@@ -152,8 +152,18 @@ function improve(accuracy)
         visited[knn][std_dev][cutoff][key]
         )
     {
-        // We would be entering a cycle if we continued
-        console.log("Done: Cycle detected!");
+        state_increment();
+        take_reading();
+        return;
+    }
+    // Detect if we're in a position we've previously been in
+    if(visited[knn] && 
+        visited[knn][std_dev] && 
+        visited[knn][std_dev][cutoff] && 
+        Object.keys(visited[knn][std_dev][cutoff]).length == 9
+        )
+    {
+        console.error("Search exhausted!");
         return;
     }
     visited[knn] = (visited[knn] || {});
