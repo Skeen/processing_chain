@@ -1,3 +1,5 @@
+include tools/config.mk
+
 # Programs
 #---------
 PROJECT_FOLDER=..
@@ -61,19 +63,9 @@ KNN_RENDER_GROUND=output/render.ground.json
 KNN_RENDER_RESUME=output/render.resume.json
 KNN_RENDER_LATEX=output/render.latex.pdf
 
-# Configuration stuff
-#--------------------
-PERCENTAGE=0.5
-REMOTE_KNN=true
-REMOTE_KNN_SPLIT=5
-REMOTE_KNN_TIMEOUT=100000000
-KNN_CONFUSION_ARGS=-M --knn=3
-KNN_RENDER_LATEX_ARGS=-lscxp
-USE_MODEL=true
-
 # Helper targets
 #---------------
 .flags/%: force
-	@mkdir -p .flags
+	@mkdir -p $(dir $@)
 	@echo '$($(@F))' | cmp -s - $@ || echo '$($(@F))' > $@
 

@@ -2,17 +2,17 @@
 #-----------
 # .raw to csv
 csv/%.csv: data/%.raw
-	@mkdir -p csv/
+	@mkdir -p $(dir $@)
 	cat $< | $(RAW_TO_CSV) > $@
 	
 # .csv to .csv (copy)
 csv/%.csv: data/%.csv
-	@mkdir -p csv/
+	@mkdir -p $(dir $@)
 	cp $< $@
 
 # .csv to .jobfiles
 jobs/%.jobfile: csv/%.csv
-	@mkdir -p jobs
+	@mkdir -p $(dir $@)
 	@# This replaces $(CSV_TO_JOBFILE)
 	basename $< | cut -f1 -d'_' | tr --delete '\n' > $@
 	echo " $<" >> $@
@@ -25,14 +25,14 @@ jobs/%.jobfile: csv/%.csv
 
 # .jobfiles to .jobfile (combine)
 $(JOBFILE_COMBINED): $(JOB_FILES)
-	@mkdir -p jobfiles
+	@mkdir -p $(dir $@)
 	cat $^ > $@
 	@# We trust cat to work
 	@#cat $@ | ../jobfile-validator/index.js
 
 # .jobfile to .jobfiles (split)
 $(JOBFILE_SPLIT): $(JOBFILE_COMBINED) .flags/PERCENTAGE
-	@mkdir -p jobfiles
+	@mkdir -p $(dir $@)
 	cat $< | $(JOBFILE_SPLITTER) -O jobfiles -rbp $(PERCENTAGE)
 	touch $@
 	@# Validate output jobfiles was created correctly
