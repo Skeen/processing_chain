@@ -164,7 +164,7 @@ function improve(accuracy)
     max_accuracy = Math.max(max_accuracy, accuracy);
     console.log();
     console.log("acc:", Math.round(accuracy * 100)/100, "max", Math.round(max_accuracy * 100) / 100);
-    console.log("key", key);
+    console.log("key:", key, "tried:", Object.keys(visited[knn][std_dev][cutoff]).length);
 
     // If we did worse, undo and try another approach
     if(accuracy <= old_accuracy)
