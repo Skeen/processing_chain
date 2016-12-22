@@ -4,7 +4,7 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 var make = function(callback)
 {
-    var command = 'KNN_CONFUSION_ARGS="-M --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make';
+    var command = 'KNN_CONFUSION_ARGS="-M --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make ; state=' + state;
     console.log(command);
     exec(command, callback); 
 }
@@ -71,17 +71,30 @@ function undo()
     }
 }
 
+var visited = {};
+
+var max_accuracy = 0;
 var old_accuracy = 0;
 function improve(accuracy)
 {
-    apply();
-    if(accuracy > old_accuracy)
+    // Detect if we're in a position we've previously been in
+    if(visited[knn] && visited[knn][std_dev] && visited[knn][std_dev][cutoff] && visited[knn][std_dev][cutoff][state])
     {
-        //console.log("accuracy improved!");
+        console.log("cycle detected!");
+        return;
     }
-    else
+    visited[knn] = (visited[knn] || {});
+    visited[knn][std_dev] = (visited[knn][std_dev] || {});
+    visited[knn][std_dev][cutoff] = (visited[knn][std_dev][cutoff] || {});
+    visited[knn][std_dev][cutoff][state] = (visited[knn][std_dev][cutoff][state] || {});
+    
+    // Keep track of our best so far
+    max_accuracy = Math.max(max_accuracy, accuracy);
+    console.log("acc:", Math.round(accuracy * 100)/100, "max", Math.round(max_accuracy * 100) / 100);
+
+    apply();
+    if(accuracy < old_accuracy) // If we did worse, revert and switch approach
     {
-        console.log("accuracy falled!");
         undo();
 
         state++;
@@ -115,8 +128,6 @@ function take_reading()
             }
             var json = JSON.parse(data);
             var accuracy = json.accuracy;
-
-            console.log(accuracy);
 
             improve(accuracy);
         });
