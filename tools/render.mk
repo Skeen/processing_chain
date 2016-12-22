@@ -7,9 +7,9 @@ $(KNN_RENDER_GROUND): $(KNN_CONFUSION_JSON)
 	cat $< | $(KNN_RENDER) -g >$@
 
 # .json to .json (processing)
-$(KNN_RENDER_RESUME): $(KNN_CONFUSION_JSON)
+$(KNN_RENDER_RESUME): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_RESUME_ARGS
 	@mkdir -p $(dir $@)
-	cat $< | $(KNN_RENDER) -r >$@
+	cat $< | $(KNN_RENDER) $(KNN_RENDER_RESUME_ARGS) >$@
 
 # .json to .pdf
 $(KNN_RENDER_LATEX): $(KNN_CONFUSION_JSON) .flags/KNN_RENDER_LATEX_ARGS
