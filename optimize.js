@@ -4,7 +4,7 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 var make = function(callback)
 {
-    var command = 'KNN_CONFUSION_ARGS="-M --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make ; state=' + state;
+    var command = 'KNN_CONFUSION_ARGS="-M --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make ;state=' + JSON.stringify(state);
     console.log(command);
     exec(command, callback); 
 }
@@ -15,58 +15,120 @@ var cutoff = 0;
 
 var std_dev_change = 0.05;
 
-var state = 1;
+var state = {};
+reset_state();
+
+function reset_state()
+{
+    state["K"] = 1;
+    state["S"] = 1;
+    state["C"] = 1;
+    state["x"] = 1;
+}
+
+var last_state = {};
 
 function apply()
 {
-    switch(state)
+    switch(state["K"])
     {
-        case 1:
+        case 2:
             knn++;
             break;
-        case 3:
-            std_dev += std_dev_change;
-            std_dev = Math.round(std_dev * 100) / 100;
+        case 1:
             break;
+        case 3:
+            knn = Math.max(knn - 1, 0);
+            break;
+    }
+
+    switch(state["S"])
+    {
         case 2:
             cutoff += 1;
             break;
-        case 4:
-            knn = Math.max(knn - 1, 0);
+        case 1:
             break;
-        case 6:
+        case 3:
+            cutoff = Math.max(cutoff - 1, 0);
+            break;
+    }
+
+    switch(state["C"])
+    {
+        case 2:
+            std_dev += std_dev_change;
+            std_dev = Math.round(std_dev * 100) / 100;
+            break;
+        case 1:
+            break;
+        case 3:
             std_dev -= std_dev_change;
             std_dev = Math.round(std_dev * 100) / 100;
             break;
-        case 5:
-            cutoff = Math.max(cutoff - 1, 0);
-            break;
+    }
+
+    last_state = state;
+}
+
+function state_increment()
+{
+    state["K"] ++;
+
+    if (state["K"] > 3)
+    {
+        state["K"] = 1;
+        state["S"]++;
+    }
+    if (state["S"] > 3)
+    {
+        state["S"] = 1;
+        state["C"]++;
+    }
+    if (state["C"] > 3)
+    {
+        state["C"] = 1;
+        state["x"]++;
     }
 }
 
 function undo()
 {
-    switch(state)
+    switch(last_state["K"])
     {
+        case 3:
+            knn++;
+            break;
         case 1:
+            break;
+        case 2:
             knn = Math.max(knn - 1, 0);
             break;
+    }
+
+    switch(last_state["S"])
+    {
         case 3:
-            std_dev -= std_dev_change;
-            std_dev = Math.round(std_dev * 100) / 100;
+            cutoff += 1;
+            break;
+        case 1:
             break;
         case 2:
             cutoff = Math.max(cutoff - 1, 0);
             break;
-        case 4:
-            knn++;
-            break;
-        case 6:
+    }
+
+    switch(last_state["C"])
+    {
+        case 3:
             std_dev += std_dev_change;
             std_dev = Math.round(std_dev * 100) / 100;
             break;
-        case 5:
-            cutoff += 1;
+        case 1:
+            break;
+        case 2:
+            std_dev -= std_dev_change;
+            std_dev = Math.round(std_dev * 100) / 100;
             break;
     }
 }
@@ -77,33 +139,42 @@ var max_accuracy = 0;
 var old_accuracy = 0;
 function improve(accuracy)
 {
+    var key = state['K'] + state['S'] * 10 + state['C'] * 100;
     // Detect if we're in a position we've previously been in
-    if(visited[knn] && visited[knn][std_dev] && visited[knn][std_dev][cutoff] && visited[knn][std_dev][cutoff][state])
+    if(visited[knn] && 
+        visited[knn][std_dev] && 
+        visited[knn][std_dev][cutoff] && 
+        visited[knn][std_dev][cutoff][key]
+        )
     {
-        console.log("cycle detected!");
+        console.log("old state visited!");
         return;
     }
     visited[knn] = (visited[knn] || {});
     visited[knn][std_dev] = (visited[knn][std_dev] || {});
     visited[knn][std_dev][cutoff] = (visited[knn][std_dev][cutoff] || {});
-    visited[knn][std_dev][cutoff][state] = (visited[knn][std_dev][cutoff][state] || {});
-    
+    visited[knn][std_dev][cutoff][key] = (visited[knn][std_dev][cutoff][key] || key);
     // Keep track of our best so far
     max_accuracy = Math.max(max_accuracy, accuracy);
+    console.log();
     console.log("acc:", Math.round(accuracy * 100)/100, "max", Math.round(max_accuracy * 100) / 100);
+    console.log("key", key);
 
-    apply();
-    if(accuracy < old_accuracy) // If we did worse, revert and switch approach
+    state_increment();
+    if(accuracy > old_accuracy)
     {
-        undo();
-
-        state++;
-        if(state == 7)
-            state = 1;
-
+        //reset_state();
         apply();
     }
+    else
+    {
+        undo();
+        apply();
+    }
+
     old_accuracy = accuracy;
+
+    apply();
     take_reading();
 }
 
