@@ -17,13 +17,11 @@ var std_dev_change = 0.05;
 
 var state = {};
 reset_state();
-
 function reset_state()
 {
     state["K"] = 1;
     state["S"] = 1;
     state["C"] = 1;
-    state["x"] = 1;
 }
 
 var last_state = {};
@@ -32,10 +30,10 @@ function apply()
 {
     switch(state["K"])
     {
+        case 1:
+            break;
         case 2:
             knn++;
-            break;
-        case 1:
             break;
         case 3:
             knn = Math.max(knn - 1, 0);
@@ -44,10 +42,10 @@ function apply()
 
     switch(state["S"])
     {
+        case 1:
+            break;
         case 2:
             cutoff += 1;
-            break;
-        case 1:
             break;
         case 3:
             cutoff = Math.max(cutoff - 1, 0);
@@ -56,11 +54,11 @@ function apply()
 
     switch(state["C"])
     {
+        case 1:
+            break;
         case 2:
             std_dev += std_dev_change;
             std_dev = Math.round(std_dev * 100) / 100;
-            break;
-        case 1:
             break;
         case 3:
             std_dev -= std_dev_change;
@@ -73,7 +71,7 @@ function apply()
 
 function state_increment()
 {
-    state["K"] ++;
+    state["K"]++;
 
     if (state["K"] > 3)
     {
@@ -88,7 +86,6 @@ function state_increment()
     if (state["C"] > 3)
     {
         state["C"] = 1;
-        state["x"]++;
     }
 }
 
@@ -96,38 +93,38 @@ function undo()
 {
     switch(last_state["K"])
     {
-        case 3:
-            knn++;
-            break;
         case 1:
             break;
         case 2:
             knn = Math.max(knn - 1, 0);
             break;
+        case 3:
+            knn++;
+            break;
     }
 
     switch(last_state["S"])
     {
-        case 3:
-            cutoff += 1;
-            break;
         case 1:
             break;
         case 2:
             cutoff = Math.max(cutoff - 1, 0);
             break;
+        case 3:
+            cutoff += 1;
+            break;
     }
 
     switch(last_state["C"])
     {
-        case 3:
-            std_dev += std_dev_change;
-            std_dev = Math.round(std_dev * 100) / 100;
-            break;
         case 1:
             break;
         case 2:
             std_dev -= std_dev_change;
+            std_dev = Math.round(std_dev * 100) / 100;
+            break;
+        case 3:
+            std_dev += std_dev_change;
             std_dev = Math.round(std_dev * 100) / 100;
             break;
     }
@@ -140,6 +137,14 @@ var old_accuracy = 0;
 function improve(accuracy)
 {
     var key = state['K'] + state['S'] * 10 + state['C'] * 100;
+    // If we're in 111 (do nothing, change to 112)
+    if(key == 111)
+    {
+        state_increment();
+        take_reading();
+        return;
+    }
+
     // Detect if we're in a position we've previously been in
     if(visited[knn] && 
         visited[knn][std_dev] && 
@@ -147,7 +152,8 @@ function improve(accuracy)
         visited[knn][std_dev][cutoff][key]
         )
     {
-        console.log("old state visited!");
+        // We would be entering a cycle if we continued
+        console.log("Done: Cycle detected!");
         return;
     }
     visited[knn] = (visited[knn] || {});
@@ -160,18 +166,12 @@ function improve(accuracy)
     console.log("acc:", Math.round(accuracy * 100)/100, "max", Math.round(max_accuracy * 100) / 100);
     console.log("key", key);
 
-    state_increment();
-    if(accuracy > old_accuracy)
-    {
-        //reset_state();
-        apply();
-    }
-    else
+    // If we did worse, undo and try another approach
+    if(accuracy <= old_accuracy)
     {
         undo();
-        apply();
+        state_increment();
     }
-
     old_accuracy = accuracy;
 
     apply();
