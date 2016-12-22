@@ -58,8 +58,6 @@ KNN_CONFUSION_JSON=output/confusion/output.json
 
 KNN_DTW_MODEL_NAME=output/dtw.model.name
 KNN_DTW_MODEL_TAR=output/tar/model.tar.gz
-KNN_DTW_MODEL_UNTAR=output/tmp/dtw.model/
-KNN_DTW_MODEL_UNTAR_LOCK=output/tmp/dtw.model.lock
 KNN_DTW_MODEL_JSON=output/json/model.json
 KNN_CONFUSION_MODEL_JSON=output/confusion/model.json
 

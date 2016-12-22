@@ -5,15 +5,11 @@ include tools/confusion_helper.mk
 #-------#
 # Model #
 #-------#
-# Unpack tar file, and combine pieces into a single json
-$(KNN_DTW_MODEL_UNTAR_LOCK): $(KNN_DTW_MODEL_TAR)
-	@mkdir -p $(KNN_DTW_MODEL_UNTAR)
-	cd $(KNN_DTW_MODEL_UNTAR) && tar -xzf $(shell realpath $<) --strip-components 1 
-	touch $@
-
-$(KNN_DTW_MODEL_JSON): $(KNN_DTW_MODEL_UNTAR_LOCK)
+# Unpack tar file, and combine
+$(KNN_DTW_MODEL_JSON): $(KNN_DTW_MODEL_TAR)
 	@mkdir -p $(dir $@)
-	cat $(KNN_DTW_MODEL_UNTAR)/* | tr --delete '\n' | tr ',' '\n' | sed 's/\]\[/,/g' | tr '\n' ',' > $@
+	tar -Oxzf $(shell realpath $<) | tr --delete '\n' | tr ',' '\n' | sed 's/\]\[/,/g' | tr '\n' ',' > $@
+	touch $@
 
 # Generate model
 $(KNN_CONFUSION_MODEL_JSON): $(KNN_DTW_MODEL_JSON)
@@ -24,14 +20,14 @@ $(KNN_CONFUSION_MODEL_JSON): $(KNN_DTW_MODEL_JSON)
 # Reading #
 #---------#
 ifeq ($(USE_SPLIT),true)
-# Unpack our tar file, and create dummy file
+# Unpack our tar file
 $(KNN_DTW_UNTAR_LOCK): $(KNN_DTW_TAR) .flags/USE_SPLIT
 	@rm -rf $(KNN_DTW_UNTAR)
 	@mkdir -p $(KNN_DTW_UNTAR)
 	cd $(KNN_DTW_UNTAR) && tar -xzf $(shell realpath $<) --strip-components 1 
 	touch $@
 else
-# Unpack our tar file, and combine them
+# Unpack tar file, and combine
 $(KNN_DTW_UNTAR_LOCK): $(KNN_DTW_TAR) .flags/USE_SPLIT
 	@rm -rf $(KNN_DTW_UNTAR)
 	@mkdir -p $(KNN_DTW_UNTAR)
