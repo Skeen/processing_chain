@@ -15,7 +15,11 @@ include tools/render.mk
 
 # Build target
 #-------------
-run: $(KNN_RENDER_RESUME) $(KNN_RENDER_LATEX) $(KNN_RENDER_GROUND)
+run: resume
+	cat $(KNN_RENDER_RESUME)
+
+resume: $(KNN_RENDER_RESUME)
+pdf: $(KNN_RENDER_LATEX)
 
 clean:
 	rm -rf data
@@ -31,5 +35,5 @@ clean_output:
 	rm -rf output/tmp
 
 # These don't really output files
-.PHONY: all prepare run clean clean_output force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_COMBINER build_KNN_RENDER
+.PHONY: all prepare run resume pdf clean clean_output force print build_JOBFILE_SPLITTER build_KNN_CONFUSION build_KNN_COMBINER build_KNN_RENDER
 .SECONDARY: $(INPUT_FILES) $(DOWNLOAD_FILES) $(MD5_FILES) $(DATA_FILES) $(CSV_FILES) $(JOB_FILES)
