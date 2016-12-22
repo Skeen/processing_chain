@@ -49,19 +49,23 @@ JOBFILE_QRY=jobfiles/qry.jobfile
 JOBFILE_REF=jobfiles/ref.jobfile
 
 KNN_DTW_NAME=output/dtw.output.name
-KNN_DTW_TAR=output/dtw.output.tar.gz
-KNN_DTW_JSONS=output/dtw.output/PROCESSED
-KNN_CONFUSION_JSONS=output/confusion.output/DONE
-KNN_CONFUSION_JSON=output/confusion.output.json
+KNN_DTW_TAR=output/tar/output.tar.gz
+KNN_DTW_UNTAR=output/tmp/dtw.output
+KNN_DTW_UNTAR_LOCK=output/tmp/dtw.output.lock
+KNN_CONFUSION_JSONS=output/tmp/confusion.output
+KNN_CONFUSION_JSONS_LOCK=output/tmp/confusion.output.lock
+KNN_CONFUSION_JSON=output/confusion/output.json
 
 KNN_DTW_MODEL_NAME=output/dtw.model.name
-KNN_DTW_MODEL_TAR=output/dtw.model.tar.gz
-KNN_DTW_MODEL_JSON=output/dtw.model.json
-KNN_CONFUSION_MODEL_JSON=output/confusion.model.json
+KNN_DTW_MODEL_TAR=output/tar/model.tar.gz
+KNN_DTW_MODEL_UNTAR=output/tmp/dtw.model/
+KNN_DTW_MODEL_UNTAR_LOCK=output/tmp/dtw.model.lock
+KNN_DTW_MODEL_JSON=output/json/model.json
+KNN_CONFUSION_MODEL_JSON=output/confusion/model.json
 
-KNN_RENDER_GROUND=output/render.ground.json
-KNN_RENDER_RESUME=output/render.resume.json
-KNN_RENDER_LATEX=output/render.latex.pdf
+KNN_RENDER_GROUND=output/render/ground.json
+KNN_RENDER_RESUME=output/render/resume.json
+KNN_RENDER_LATEX=output/render/latex.pdf
 
 # Helper targets
 #---------------
