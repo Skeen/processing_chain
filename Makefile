@@ -16,7 +16,7 @@ include tools/render.mk
 # Build target
 #-------------
 run: resume
-	cat $(KNN_RENDER_RESUME)
+	cat $(KNN_RENDER_RESUME) | python -m json.tool
 
 resume: $(KNN_RENDER_RESUME)
 pdf: $(KNN_RENDER_LATEX)
