@@ -9,11 +9,12 @@ ifeq ($(USE_MODEL),false)
 $(OUTPUT_FOLDER)/%.json: $(INPUT_FOLDER)/% .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
 	@mkdir -p $(dir $@)
 	cat $< | $(KNN_CONFUSION) $(KNN_CONFUSION_ARGS) | python -m json.tool > $@
-
+	echo "$(KNN_CONFUSION_ARGS)" > $@.args
 else
 $(OUTPUT_FOLDER)/%.json: $(INPUT_FOLDER)/% .flags/KNN_CONFUSION_ARGS .flags/USE_MODEL
 	@mkdir -p $(dir $@)
 	cat $< | $(KNN_CONFUSION) $(KNN_CONFUSION_ARGS) --statistics=$(KNN_CONFUSION_MODEL_JSON) | python -m json.tool > $@
+	echo "$(KNN_CONFUSION_ARGS)" > $@.args
 endif
 
 all: $(OUTPUT)

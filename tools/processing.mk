@@ -34,7 +34,7 @@ $(JOBFILE_COMBINED): $(JOB_FILES)
 $(JOBFILE_SPLIT): $(JOBFILE_COMBINED) .flags/PERCENTAGE
 	@mkdir -p $(dir $@)
 	cat $< | $(JOBFILE_SPLITTER) -O jobfiles -rbp $(PERCENTAGE)
-	touch $@
+	echo "$(PERCENTAGE)" > $@
 	@# Validate output jobfiles was created correctly
 	cat $(JOBFILE_QRY) | ../jobfile-validator/index.js || rm $(JOBFILE_QRY) $@
 	cat $(JOBFILE_REF) | ../jobfile-validator/index.js || rm $(JOBFILE_REF) $@

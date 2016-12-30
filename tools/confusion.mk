@@ -51,3 +51,4 @@ endif
 $(KNN_CONFUSION_JSON): $(KNN_CONFUSION_JSONS_LOCK)
 	@mkdir -p $(dir $@)
 	$(KNN_COMBINER) $(shell realpath $(KNN_CONFUSION_JSONS))/ > $@
+	echo "$(USE_MODEL)" > $@.use_model
