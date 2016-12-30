@@ -6,7 +6,8 @@ var make = function(callback)
 {
     var command = 'KNN_CONFUSION_ARGS="-M --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make ;state=' + JSON.stringify(state);
     console.log(command);
-    exec(command, callback); 
+    exec(command, {maxBuffer: Number.POSITIVE_INFINITY},
+            callback);    
 }
 
 var knn = 0;
