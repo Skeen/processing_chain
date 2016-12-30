@@ -24,7 +24,7 @@ ifeq ($(USE_SPLIT),true)
 $(KNN_DTW_UNTAR_LOCK): $(KNN_DTW_TAR) .flags/USE_SPLIT
 	@rm -rf $(KNN_DTW_UNTAR)
 	@mkdir -p $(KNN_DTW_UNTAR)
-	cd $(KNN_DTW_UNTAR) && tar -xzf $(shell realpath $<) --strip-components 1 
+	cd $(KNN_DTW_UNTAR) && tar -xzf $(shell realpath $<)
 	touch $@
 else
 # Unpack tar file, and combine
