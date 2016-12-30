@@ -63,6 +63,7 @@ KNN_CONFUSION_MODEL_JSON=output/confusion/model.json
 
 KNN_RENDER_GROUND=output/render/ground.json
 KNN_RENDER_RESUME=output/render/resume.json
+KNN_RENDER_LATEX_TEX=output/render/latex.tex
 KNN_RENDER_LATEX=output/render/latex.pdf
 
 # Helper targets

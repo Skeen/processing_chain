@@ -2,7 +2,7 @@
 #--------------------
 PERCENTAGE?=0.5
 
-REMOTE_KNN?=true
+REMOTE_KNN?=false
 REMOTE_KNN_SPLIT?=5
 REMOTE_KNN_TIMEOUT?=100000000
 
