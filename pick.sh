@@ -18,6 +18,11 @@ SITES=$(ls $DATA_IN | sed "s/\(.*\)_.*/\1/g" | uniq)
 NUM_SITES=$(echo "$SITES" | wc -l)
 # Count the number of ground truths to pick
 NUM_TO_PICK=$(echo "$NUM_SITES /100 * $PERCENTAGE" | bc)
+# Assert that we're picking atleast two samples
+if [ "$NUM_TO_PICK" -lt 2 ]; then
+    echo "Cannot pick less than 2 sample" >&2
+    exit 1
+fi
 
 # Print out information
 echo "$NUM_SITES sites found"
