@@ -14,5 +14,5 @@ do
 	ls data > input/FILES
 	touch input/REGEX
 	make -j8
-	mv output output_${RUN}_$RANDOM
+	mv output/render/resume.json output_resume_${RUN}_$RANDOM.json
 done
