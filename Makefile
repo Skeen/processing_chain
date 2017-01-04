@@ -21,6 +21,8 @@ run: resume
 resume: $(KNN_RENDER_RESUME)
 pdf: $(KNN_RENDER_LATEX)
 
+download: $(DATA_FILES)
+
 clean:
 	rm -rf data
 	rm -rf jobs
