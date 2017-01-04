@@ -17,7 +17,7 @@ SITES=$(ls $DATA_IN | sed "s/\(.*\)_.*/\1/g" | uniq)
 # Count the ground truths
 NUM_SITES=$(echo "$SITES" | wc -l)
 # Count the number of ground truths to pick
-NUM_TO_PICK=$(echo "$NUM_SITES /100 * $PERCENTAGE" | bc)
+NUM_TO_PICK=$(echo "" | awk "{print int( ($NUM_SITES / 100 * $PERCENTAGE) + 0.5 ) }")
 # Assert that we're picking atleast two samples
 if [ "$NUM_TO_PICK" -lt 2 ]; then
     echo "Cannot pick less than 2 sample" >&2
