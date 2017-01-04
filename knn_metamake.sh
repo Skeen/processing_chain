@@ -8,7 +8,7 @@ mkdir -p output_resume
 
 for RUN in ${RUNS[@]}
 do
-	for i in {1..2}
+	for i in {1..10}
 	do
 		rm input -rf
 		make clean
@@ -17,7 +17,7 @@ do
 		mkdir input
 		ls jobs | sed 's/.jobfile/.raw/g' > input/FILES
 		touch input/REGEX
-		make -j8 resume
+		make resume
 		mv output/render/resume.json output_resume/split${RUN}_index${i}.json
 	done
 done
