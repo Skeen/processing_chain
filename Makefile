@@ -23,6 +23,8 @@ pdf: $(KNN_RENDER_LATEX)
 
 download: $(DATA_FILES)
 
+jobs: $(JOB_FILES)
+
 clean:
 	rm -rf data
 	rm -rf jobs

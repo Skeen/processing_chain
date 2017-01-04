@@ -6,13 +6,14 @@ if [ "$#" -lt 1 ]; then
 fi
 
 INPUT=$(cat $1)
-DATA_FOLDER="data"
+DATA_FOLDER="jobs"
 
 rm $DATA_FOLDER -rf
 mkdir $DATA_FOLDER
 
+cd $DATA_FOLDER/
+
 for SITE in ${INPUT[@]}
 do
-	cp data_in/${SITE}* $DATA_FOLDER/
+	ln -s ../jobs_in/${SITE}* .
 done
-
