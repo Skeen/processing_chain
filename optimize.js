@@ -10,7 +10,7 @@ var make = function(callback)
             callback);    
 }
 
-var knn = 0;
+var knn = 1;
 var std_dev = 1;
 var cutoff = 0;
 
@@ -37,7 +37,7 @@ function apply()
             knn++;
             break;
         case 3:
-            knn = Math.max(knn - 1, 0);
+            knn = Math.max(knn - 1, 1);
             break;
     }
 
@@ -97,7 +97,7 @@ function undo()
         case 1:
             break;
         case 2:
-            knn = Math.max(knn - 1, 0);
+            knn = Math.max(knn - 1, 1);
             break;
         case 3:
             knn++;
