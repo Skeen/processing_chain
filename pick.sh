@@ -16,7 +16,7 @@ elif [ "$PERCENTAGE" -gt 100 ]; then
     exit 1
 fi
 # Data input folder, i.e. where to pull data from
-DATA_IN=data_in
+DATA_IN=jobs_in
 # Pull out all the ground-truths
 SITES=$(ls $DATA_IN | sed "s/\(.*\)_.*/\1/g" | uniq)
 # Count the ground truths
