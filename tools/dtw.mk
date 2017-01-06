@@ -5,6 +5,11 @@ ifeq ($(REMOTE_KNN),true)
 $(KNN_DTW_NAME): $(JOBFILE_QRY) $(JOBFILE_REF)
 	@mkdir -p $(dir $@)
 	$(REMOTE_KNN_DTW_REQUEST) $(JOBFILE_REF) $(JOBFILE_QRY) "" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
+	@if [ -s $(KNN_DTW_NAME) ]; then \
+		echo "DTW request returned no name: Server down?"; \
+		rm $(KNN_DTW_NAME); \
+		false; \
+	fi
 
 $(KNN_DTW_TAR).download: $(KNN_DTW_NAME)
 	@mkdir -p $(dir $@)
@@ -39,6 +44,11 @@ ifeq ($(REMOTE_KNN),true)
 $(KNN_DTW_MODEL_NAME): $(JOBFILE_COMBINED)
 	@mkdir -p $(dir $@)
 	$(REMOTE_KNN_DTW_REQUEST) $(JOBFILE_COMBINED) $(JOBFILE_COMBINED) "-m" $(REMOTE_KNN_SPLIT) $(REMOTE_KNN_TIMEOUT) > $@
+	@if [ -s $(KNN_DTW_MODEL_NAME) ]; then \
+		echo "DTW request returned no name: Server down?"; \
+		rm $(KNN_DTW_MODEL_NAME); \
+		false; \
+	fi
 
 $(KNN_DTW_MODEL_TAR).download: $(KNN_DTW_MODEL_NAME)
 	@mkdir -p $(dir $@)
