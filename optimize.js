@@ -4,15 +4,15 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 var make = function(callback)
 {
-    var command = 'KNN_CONFUSION_ARGS="-M --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make ;state=' + JSON.stringify(state);
+    var command = 'KNN_CONFUSION_ARGS="-w d --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff + '" make ;state=' + JSON.stringify(state);
     console.log(command);
     exec(command, {maxBuffer: Number.POSITIVE_INFINITY},
             callback);    
 }
 
-var knn = 1;
-var std_dev = 1;
-var cutoff = 0;
+var knn = 3;
+var std_dev = 1.5;
+var cutoff = 10;
 
 var std_dev_change = 0.05;
 
