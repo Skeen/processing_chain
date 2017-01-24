@@ -165,6 +165,7 @@ function improve(accuracy)
         )
     {
         console.error("Search exhausted!");
+        console.log(max_config);
         return;
     }
     visited[knn] = (visited[knn] || {});
@@ -172,7 +173,11 @@ function improve(accuracy)
     visited[knn][std_dev][cutoff] = (visited[knn][std_dev][cutoff] || {});
     visited[knn][std_dev][cutoff][key] = (visited[knn][std_dev][cutoff][key] || key);
     // Keep track of our best so far
-    max_accuracy = Math.max(max_accuracy, accuracy);
+    if(accuracy >= max_accuracy)
+    {
+        max_accuracy = accuracy;
+        max_config = 'KNN_CONFUSION_ARGS="-w d --knn=' + knn + ' -n ' + std_dev + ' -q ' + cutoff;
+    }
     console.log();
     console.log("acc:", Math.round(accuracy * 100)/100, "max", Math.round(max_accuracy * 100) / 100);
     console.log("key:", key, "tried:", Object.keys(visited[knn][std_dev][cutoff]).length);
